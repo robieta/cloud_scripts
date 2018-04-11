@@ -49,6 +49,17 @@ def main():
              "{user}-sandbox-{machine_id} --zone {zone}".format(
       gcloud=GCLOUD, project=project, user=USER, machine_id=machine_id, zone=zone
   ))
+
+  if len(args) > 1:
+    ssh_cmd += " -- -N"
+    ports = set()
+    for i in args[1:]:
+      if i == "-":
+        i = str(6006 + int(machine_id))
+      ports.add(i)
+    for i in sorted(ports):
+      ssh_cmd += " -L {i}:localhost:{i}".format(i=i)
+
   print(ssh_cmd)
   sys.exit()
 
