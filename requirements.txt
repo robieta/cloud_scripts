@@ -1,1 +1,2 @@
-gcloud>=0.18.3
+google-api-python-client>=1.6.6
+google-auth-httplib2>=0.0.3
