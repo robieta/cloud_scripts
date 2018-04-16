@@ -1,6 +1,6 @@
 
-# Convenience script for sshing into cloud instances
-py_output=`python3 _cssh.py ssh "$@"`
+# Convenience script for rsyncing files to cloud instances
+py_output=`python3 _cssh.py rsync "$@"`
 exit_code=$?
 
 if [ $exit_code -eq 255 ]; then
