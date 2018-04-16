@@ -1,3 +1,5 @@
+#!/bin/bash
+cd "$(dirname "$0")"
 
 # Convenience script for sshing into cloud instances
 py_output=`python3 _cssh.py ssh "$@"`

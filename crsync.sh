@@ -1,3 +1,5 @@
+#!/bin/bash
+cd "$(dirname "$0")"
 
 # Convenience script for rsyncing files to cloud instances
 py_output=`python3 _cssh.py rsync "$@"`
