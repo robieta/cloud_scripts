@@ -11,6 +11,10 @@ USER = os.getlogin()
 GCLOUD = "/usr/bin/gcloud"
 SANDBOX_TEMPLATE = "{user}-sandbox-{id}"
 
+def populate_template(user, id):
+  id_str = str(id).zfill(3)
+  return SANDBOX_TEMPLATE.format(user=user, id=id_str)
+
 ROOT = os.path.dirname(os.path.abspath(__file__))
 
 

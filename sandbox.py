@@ -25,7 +25,7 @@ def get_new_instance_name(project):
   instances = list_instances(project)
   disks = list_disks(project)
   for i in range(10000):
-    name = constants.SANDBOX_TEMPLATE.format(user=constants.USER, id=i)
+    name = constants.populate_template(user=constants.USER, id=i)
     if name not in instances and name not in disks:
       return name
   raise NameError("How? ...just how?")

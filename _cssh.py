@@ -3,7 +3,7 @@ import re
 import subprocess
 import sys
 
-from constants import USER, GCLOUD, PROJECTS, ZONES, SANDBOX_TEMPLATE
+from constants import USER, GCLOUD, PROJECTS, ZONES, populate_template
 
 project_string = "\n".join(
     ["  {}: {}".format(key, val) for key, val in sorted(PROJECTS.items())])
@@ -25,9 +25,10 @@ def construct_command(machine_id, port_list=None):
 
   zone = ZONES[project]
 
+  machine_name = populate_template(user=USER, id=machine_id)
   ssh_cmd = ("{gcloud} compute --project {project} ssh "
-             "{user}-sandbox-{machine_id} --zone {zone}".format(
-      gcloud=GCLOUD, project=project, user=USER, machine_id=machine_id, zone=zone
+             "{machine_name} --zone {zone}".format(
+      gcloud=GCLOUD, project=project, machine_name=machine_name, zone=zone
   ))
 
   if len(port_list) > 0:
