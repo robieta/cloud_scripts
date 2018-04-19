@@ -1,5 +1,6 @@
 
 import argparse
+import json
 import sys
 
 import googleapiclient.discovery
@@ -31,8 +32,16 @@ def get_new_instance_name(project):
   raise NameError("How? ...just how?")
 
 
+def make_disk(project, name):
+  creation_dict = dict(
+      name=name,
+  )
+  print(creation_dict)
+
+
 def make(namespace):
   name = get_new_instance_name(namespace.project)
+  make_disk(project=namespace.project, name=name)
   print(name)
 
 

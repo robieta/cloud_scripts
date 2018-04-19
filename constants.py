@@ -30,3 +30,4 @@ ZONES = {
   "tensorflow-performance": "us-west1-b",
   "ctpu-2017-09-01":        "us-central1-c",
 }
+
