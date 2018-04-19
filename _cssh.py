@@ -89,7 +89,7 @@ def main():
     raw_ssh_cmd = subprocess.check_output(ssh_cmd.split() + ["--dry-run"]).decode("utf-8").strip().split()
     destination = raw_ssh_cmd.pop()
     remote_shell = "'" + " ".join(raw_ssh_cmd) + "'"
-    print(" ".join(["rsync", "--cvs-exclude", "-rvz", "-e", remote_shell] + [arg.replace("CLOUD", destination) for arg in args[1:]]))
+    print(" ".join(["rsync", "--cvs-exclude", "--exclude", "*.pyc", "-rvz", "-e", remote_shell] + [arg.replace("CLOUD", destination) for arg in args[1:]]))
     sys.exit()
   else:
     print("invalid command")
