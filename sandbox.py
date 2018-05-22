@@ -184,7 +184,7 @@ def make_instance(project, name, zone, machine_type, min_cpu_platform, accellera
       "--maintenance-policy", "TERMINATE",
       "--network-tier", "PREMIUM",
       "--no-restart-on-failure",
-      "--service-account", constants.ACCOUNT,
+      "--service-account", constants.ACCOUNT[project],
       "--scopes", "https://www.googleapis.com/auth/cloud-platform"] + \
       accellerator_spec + \
       ["--min-cpu-platform", min_cpu_platform,
@@ -382,6 +382,7 @@ def make(namespace):
     assert namespace.project in constants.IMAGENET
     assert zone in constants.IMAGENET[namespace.project]
 
+  assert namespace.project in constants.ACCOUNT
   make_instance(project=namespace.project, name=name, zone=zone,
                 machine_type=machine_type, min_cpu_platform=min_cpu_platform,
                 accellerator_spec=accellerator_spec, rebuild=namespace.rebuild)

@@ -6,7 +6,10 @@ if sys.version_info[0] != 3:
   print("Use Python3.")
   sys.exit(255)
 
-ACCOUNT = "814778702491-compute@developer.gserviceaccount.com"
+ACCOUNT = {
+  "tensorflow-onboarding": "814778702491-compute@developer.gserviceaccount.com",
+  "ctpu-2017-09-01": "855031184363-compute@developer.gserviceaccount.com",
+}
 USER = os.getlogin()
 PROFILE = "~/.cloud/.profile"
 GCLOUD = "/usr/bin/gcloud"
