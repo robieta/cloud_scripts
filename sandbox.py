@@ -372,6 +372,8 @@ def make(namespace):
   zone = get_zone(project=namespace.project, num_k80=namespace.k80,
                   num_p100=namespace.p100, num_v100=namespace.v100)
   machine_type = "n1-standard-{}".format(num_cpu)
+  if num_cpu == 12:
+    machine_type = "custom-12-46080"  # 1 V100 case
   accellerator_spec = get_accellerator_spec(
       num_k80=namespace.k80, num_p100=namespace.p100, num_v100=namespace.v100)
   if num_cpu != namespace.cpus:
