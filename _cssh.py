@@ -3,7 +3,7 @@ import re
 import subprocess
 import sys
 
-from constants import USER, GCLOUD, PROJECTS, ZONES, populate_template
+from constants import USER, GCLOUD, PROJECTS, populate_template
 
 project_string = "\n".join(
     ["  {}: {}".format(key, val) for key, val in sorted(PROJECTS.items())])
@@ -23,12 +23,10 @@ def construct_command(machine_id, port_list=None):
     print("Invalid machine id.")
     sys.exit(255)
 
-  zone = ZONES[project]
-
   machine_name = populate_template(user=USER, id=machine_id)
   ssh_cmd = ("{gcloud} compute --project {project} ssh "
-             "{machine_name} --zone {zone}".format(
-      gcloud=GCLOUD, project=project, machine_name=machine_name, zone=zone
+             "{machine_name}".format(
+      gcloud=GCLOUD, project=project, machine_name=machine_name
   ))
 
   if len(port_list) > 0:

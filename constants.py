@@ -8,6 +8,7 @@ if sys.version_info[0] != 3:
 
 ACCOUNT = "814778702491-compute@developer.gserviceaccount.com"
 USER = os.getlogin()
+PROFILE = "~/.cloud/.profile"
 GCLOUD = "/usr/bin/gcloud"
 SANDBOX_TEMPLATE = "{user}-sandbox-{id}"
 
@@ -26,8 +27,16 @@ PROJECTS = {
 }
 
 ZONES = {
-  "tensorflow-onboarding":  "us-central1-c",
-  "tensorflow-performance": "us-west1-b",
-  "ctpu-2017-09-01":        "us-central1-c",
+  "tensorflow-onboarding":  ["us-central1-c", "us-central1-f"],
+  "tensorflow-performance": ["us-west1-b"],
+  "ctpu-2017-09-01":        ["us-central1-c"],
 }
 
+SNAPSHOTS = {
+  "tensorflow-onboarding": "ubuntu-1604-lts-drawfork-with-cuda-20180521",
+}
+
+IMAGENET = {
+  "tensorflow-onboarding": {"us-central1-c": "imagenet-copy-1c",
+                            "us-central1-f": "imagenet-copy-1f"},
+}
