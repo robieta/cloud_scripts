@@ -48,13 +48,14 @@ def run(args, silent=False):
   return output.decode("utf-8")
 
 
-def ssh_cmd(cmd: list, instance: str, zone: str, max_attempts=1, backoff=0.5, description=None):
+def ssh_cmd(cmd: list, instance: str, zone: str, project: str, max_attempts=1,
+    backoff=0.5, description=None):
   usr_host = "{user}@{instance}".format(
       user=constants.USER,
       instance=instance,
   )
   command = [constants.GCLOUD, "compute", "ssh", usr_host, "--zone", zone,
-             "--command", " ".join(cmd)]
+             "--project", project, "--command", " ".join(cmd)]
   for i in range(max_attempts):
     final = (i+1) == max_attempts
     try:
@@ -68,14 +69,15 @@ def ssh_cmd(cmd: list, instance: str, zone: str, max_attempts=1, backoff=0.5, de
       continue
 
 
-def scp_file(local_path, remote_path, instance, zone, chmod=None):
+def scp_file(local_path, remote_path, instance, zone, project, chmod=None):
   cmd = [constants.GCLOUD, "compute", "scp", local_path,
-         "{}:{}".format(instance, remote_path), "--zone", zone]
+         "{}:{}".format(instance, remote_path), "--zone", zone, "--project", project]
   print("Transfering file {} to {}:{}".format(local_path, instance, remote_path))
   run(cmd)
   if chmod:
     print("Setting chmod to {}".format(chmod))
-    ssh_cmd(["sudo", "chmod", chmod, remote_path], instance=instance, zone=zone)
+    ssh_cmd(["sudo", "chmod", chmod, remote_path], instance=instance, zone=zone,
+            project=project)
 
 
 def calc_num_cpus(num_cpu, num_k80, num_p100, num_v100):
@@ -202,9 +204,9 @@ def make_instance(project, name, zone, machine_type, min_cpu_platform, accellera
     if rebuild:
       with ShowTime("Installing CUDA and CudNN", show_elapsed=True):
         scp_file(local_path="install_cuda.sh", remote_path="/tmp/install_cuda.sh",
-                 instance=name, zone=zone, chmod="777")
+                 instance=name, zone=zone, project=project, chmod="777")
         print("Running install_cuda.sh on remote. (This will take a few moments.)")
-        ssh_cmd(["sudo", "/tmp/insall_cuda.sh"], instance=name, zone=zone)
+        ssh_cmd(["sudo", "/tmp/insall_cuda.sh"], instance=name, zone=zone, project=project)
   else:
     if rebuild:
       print("No GPUs specified. CUDA will not be installed.")
@@ -235,21 +237,24 @@ def make_data_disk(project, name, zone):
     run(data_attach_cmd)
 
   with ShowTime("Creating mount point"):
-    ssh_cmd(cmd=["sudo", "mkdir", "-p", "/data"], instance=name, zone=zone, max_attempts=3)
+    ssh_cmd(cmd=["sudo", "mkdir", "-p", "/data"], instance=name, zone=zone,
+            project=project, max_attempts=3)
 
   with ShowTime("Formatting data disk"):
     ssh_cmd(["sudo", "mkfs.ext4", "-F", "/dev/sdb"],
-            instance=name, zone=zone, max_attempts=3)
+            instance=name, zone=zone, project=project, max_attempts=3)
 
   with ShowTime("Adding to fstab"):
     ssh_cmd(["echo", "'/dev/sdb /data ext4 discard,defaults 0 2'", "|", "sudo", "tee", "--append", "/etc/fstab"],
-            instance=name, zone=zone, max_attempts=1)
+            instance=name, zone=zone, project=project, max_attempts=1)
 
   with ShowTime("Mounting disk"):
-    ssh_cmd(["sudo", "mount", "-a"], instance=name, zone=zone, max_attempts=3)
+    ssh_cmd(["sudo", "mount", "-a"], instance=name, zone=zone, project=project,
+            max_attempts=3)
 
   with ShowTime("Setting permissions"):
-    ssh_cmd(cmd=["sudo", "chmod", "777", "/data"], instance=name, zone=zone, max_attempts=3)
+    ssh_cmd(cmd=["sudo", "chmod", "777", "/data"], instance=name, zone=zone,
+            project=project, max_attempts=3)
 
 
 def attach_imagenet(project, name, zone, data_disk):
@@ -260,15 +265,17 @@ def attach_imagenet(project, name, zone, data_disk):
     run(imagenet_attach_cmd)
 
   with ShowTime("Creating moint point /imn for ImageNet disk"):
-    ssh_cmd(cmd=["sudo", "mkdir", "-p", "/imn"], instance=name, zone=zone, max_attempts=3)
+    ssh_cmd(cmd=["sudo", "mkdir", "-p", "/imn"], instance=name, zone=zone,
+            project=project, max_attempts=3)
 
   with ShowTime("Adding disk to fstab"):
     ssh_cmd(["echo", "'{} /imn ext4 discard,defaults,norecovery 0 2'".format(imn_dev),
              "|", "sudo", "tee", "--append", "/etc/fstab"],
-            instance=name, zone=zone, max_attempts=1)
+            instance=name, zone=zone, project=project, max_attempts=1)
 
   with ShowTime("Mounting disk"):
-    ssh_cmd(["sudo", "mount", "-a"], instance=name, zone=zone, max_attempts=3)
+    ssh_cmd(["sudo", "mount", "-a"], instance=name, zone=zone, project=project,
+            max_attempts=3)
 
 
 def open_http(project, zone):
@@ -292,7 +299,7 @@ def open_http(project, zone):
     print("Skipping HTTP/HTTPS.")
 
 
-def configure_new_instance(instance: str, zone: str, gpu_present: bool):
+def configure_new_instance(instance: str, zone: str, project: str, gpu_present: bool):
   """
   Very much work in progress. Apt can be finicky, so backoff is used.
   """
@@ -302,21 +309,22 @@ def configure_new_instance(instance: str, zone: str, gpu_present: bool):
                  "virtualenv", "htop", "iotop"],
             instance=instance,
             zone=zone,
+            project=project,
             max_attempts=10,
             backoff=4,
             )
 
   with ShowTime("Upgrading PIP"):
     ssh_cmd(["sudo", "pip", "install", "--upgrade", "pip", "setuptools"],
-            instance=instance, zone=zone, max_attempts=3)
+            instance=instance, zone=zone, project=project, max_attempts=3)
 
     ssh_cmd(["sudo", "pip3", "install", "--upgrade", "pip", "setuptools"],
-            instance=instance, zone=zone, max_attempts=3)
+            instance=instance, zone=zone, project=project, max_attempts=3)
 
   with ShowTime("Cloning Garden"):
     ssh_cmd(cmd=["mkdir", "-p", "TensorFlow", "&&", "cd", "TensorFlow", "&&", "git",
                  "clone", "https://github.com/tensorflow/models.git"], instance=instance,
-            zone=zone, max_attempts=3)
+            zone=zone, project=project, max_attempts=3)
 
   with ShowTime("Setting environment vars."):
     export0 = ("export LD_LIBRARY_PATH=/usr/local/cuda/lib64:"
@@ -325,17 +333,18 @@ def configure_new_instance(instance: str, zone: str, gpu_present: bool):
     ssh_cmd(cmd=["mkdir", "-p", "~/.cloud", "&&",
                  "printf", "'" + export0 + "'", ">", constants.PROFILE, "&&",
                  "printf", "'" + export1 + "'", ">>", constants.PROFILE],
-            instance=instance, zone=zone, max_attempts=3)
+            instance=instance, zone=zone, project=project, max_attempts=3)
 
   with ShowTime("Creating virtualenvs (~/envs)"):
     ssh_cmd(cmd=["mkdir", "~/envs", "&&", "mkdir", "~/envs/py2_garden", "&&",
-                 "mkdir", "~/envs/py3_garden"], instance=instance, zone=zone, max_attempts=3)
+                 "mkdir", "~/envs/py3_garden"], instance=instance, zone=zone,
+            project=project, max_attempts=3)
 
     ssh_cmd(cmd=["virtualenv", "--system-site-packages", "~/envs/py2_garden"],
-            instance=instance, zone=zone, max_attempts=3)
+            instance=instance, zone=zone, project=project, max_attempts=3)
     ssh_cmd(cmd=["virtualenv", "--system-site-packages", "-p", "python3",
                  "~/envs/py3_garden"],
-          instance=instance, zone=zone, max_attempts=3)
+          instance=instance, zone=zone, project=project, max_attempts=3)
 
   nightly = "tf-nightly-gpu" if gpu_present else "tf-nightly"
   python_pkgs = ["numpy", "scipy", "sklearn", nightly]
@@ -345,22 +354,23 @@ def configure_new_instance(instance: str, zone: str, gpu_present: bool):
     ssh_cmd(cmd=["source", "~/envs/py2_garden/bin/activate", "&&",
                  "pip", "install", "--upgrade"] + ["setuptools"] + python_pkgs +
                 ["&&"] + install_requirements,
-            instance=instance, zone=zone, max_attempts=3)
+            instance=instance, zone=zone, project=project, max_attempts=3)
 
   with ShowTime("Install Python3 virtualenv"):
     ssh_cmd(cmd=["source", "~/envs/py3_garden/bin/activate", "&&",
                  "pip", "install", "setuptools==39.1.0", "&&", # 39.2.0 is buggy in py3.
                  "pip", "install", "--upgrade"] + python_pkgs + ["&&"] + install_requirements,
-            instance=instance, zone=zone, max_attempts=3)
+            instance=instance, zone=zone, project=project, max_attempts=3)
 
   with ShowTime("Adding cloud profile to .bashrc"):
     ssh_cmd(cmd=["printf", '"\nsource ~/.cloud/.profile\n"', ">>", "~/.bashrc"],
-            instance=instance, zone=zone, max_attempts=3)
+            instance=instance, zone=zone, project=project, max_attempts=3)
 
   if constants.USER in os.listdir("user_config"):
     for i in os.listdir(os.path.join("user_config", constants.USER)):
       local_path = os.path.join("user_config", constants.USER, i)
-      scp_file(local_path=local_path, remote_path=i, instance=instance, zone=zone)
+      scp_file(local_path=local_path, remote_path=i, instance=instance,
+               zone=zone, project=project)
 
 
 def make(namespace):
@@ -390,7 +400,7 @@ def make(namespace):
   # Give the instance a moment to come up
   with ShowTime("Establishing SSH connection"):
     ssh_cmd(cmd=["echo", "a"], instance=name, zone=zone,
-            max_attempts=8, backoff=4)
+            project=namespace.project, max_attempts=8, backoff=4)
 
   if not namespace.no_data_disk:
     make_data_disk(project=namespace.project, name=name, zone=zone)
@@ -400,7 +410,8 @@ def make(namespace):
 
   if namespace.project == "tensorflow-onboarding":
     open_http(project=namespace.project, zone=zone)
-  configure_new_instance(instance=name, zone=zone, gpu_present=bool(accellerator_spec))
+  configure_new_instance(instance=name, zone=zone, project=namespace.project,
+                         gpu_present=bool(accellerator_spec))
 
 
 def list(namespace):
