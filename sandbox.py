@@ -366,6 +366,12 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
     ssh_cmd(cmd=["printf", '"\nsource ~/.cloud/.profile\n"', ">>", "~/.bashrc"],
             instance=instance, zone=zone, project=project, max_attempts=3)
 
+  with ShowTime("Disabling automatic restart for unattended-upgrades"):
+    # I am extremely angry that this was on by default.
+    ssh_cmd(cmd=["printf", '"\nUnattended-Upgrade::Automatic-Reboot \"false\";\n"', "|",
+                 "sudo", "tee", "-a", "/etc/apt/apt.conf.d/50unattended-upgrades"],
+            instance=instance, zone=zone, project=project, max_attempts=3)
+
   if constants.USER in os.listdir("user_config"):
     for i in os.listdir(os.path.join("user_config", constants.USER)):
       local_path = os.path.join("user_config", constants.USER, i)
