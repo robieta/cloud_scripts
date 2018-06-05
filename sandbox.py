@@ -200,13 +200,22 @@ def make_instance(project, name, zone, machine_type, min_cpu_platform, accellera
 
     run(args=inst_cmd)
 
+  # Give the instance a moment to come up
+  with ShowTime("Establishing SSH connection"):
+    ssh_cmd(cmd=["echo", "a"], instance=name, zone=zone,
+            project=namespace.project, max_attempts=8, backoff=4)
+
   if accellerator_spec:
     if rebuild:
       with ShowTime("Installing CUDA and CudNN", show_elapsed=True):
         scp_file(local_path="install_cuda.sh", remote_path="/tmp/install_cuda.sh",
                  instance=name, zone=zone, project=project, chmod="777")
-        print("Running install_cuda.sh on remote. (This will take a few moments.)")
-        ssh_cmd(["sudo", "/tmp/insall_cuda.sh"], instance=name, zone=zone, project=project)
+        input("install script is on remote. Best of luck...")
+        # # This is sufficiently rare and very finicky, so I just run the script
+        # # on remote manually.
+
+        # print("Running install_cuda.sh on remote. (This will take a few moments.)")
+        # ssh_cmd(["sudo", "/tmp/install_cuda.sh"], instance=name, zone=zone, project=project)
   else:
     if rebuild:
       print("No GPUs specified. CUDA will not be installed.")
@@ -403,11 +412,6 @@ def make(namespace):
                 machine_type=machine_type, min_cpu_platform=min_cpu_platform,
                 accellerator_spec=accellerator_spec, rebuild=namespace.rebuild)
 
-  # Give the instance a moment to come up
-  with ShowTime("Establishing SSH connection"):
-    ssh_cmd(cmd=["echo", "a"], instance=name, zone=zone,
-            project=namespace.project, max_attempts=8, backoff=4)
-
   if not namespace.no_data_disk:
     make_data_disk(project=namespace.project, name=name, zone=zone)
   if namespace.imagenet:
@@ -418,6 +422,8 @@ def make(namespace):
     open_http(project=namespace.project, zone=zone)
   configure_new_instance(instance=name, zone=zone, project=namespace.project,
                          gpu_present=bool(accellerator_spec))
+
+  print("\n\n", "="*50, "\n", "==== {} ".format(name).ljust(50, "="), "\n", "="*50)
 
 
 def list(namespace):
