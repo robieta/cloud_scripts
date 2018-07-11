@@ -59,8 +59,7 @@ def ssh_cmd(cmd: list, instance: str, zone: str, project: str, max_attempts=1,
   for i in range(max_attempts):
     final = (i+1) == max_attempts
     try:
-      run(command, silent=(not final))
-      return
+      return run(command, silent=(not final))
     except OSError:
       if final:
         raise
@@ -95,7 +94,9 @@ def calc_num_cpus(num_cpu, num_k80, num_p100, num_v100):
 
 def get_zone(project, num_k80, num_p100, num_v100):
   # TODO: make more permissive if necessary
-  if num_k80 or num_p100:
+  if num_k80:
+    zone = "us-central1-c"
+  elif num_p100:
     zone = "us-central1-c"
   elif num_v100:
     zone = "us-central1-f"
@@ -314,6 +315,19 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
   """
   with ShowTime("Beginning apt installs", show_elapsed=True):
     print("  (Retries are expected due to locking.)")
+
+    # Needed by cloud TPU profile tool.
+    ssh_cmd(cmd=[
+      "sudo", "add-apt-repository", "-y", "ppa:ubuntu-toolchain-r/test", "&&",
+      "sudo", "apt-get", "update", "&&", "sudo", "apt-get", "install", "-y",
+      "gcc-4.9", "&&", "sudo", "apt-get", "upgrade", "-y", "libstdc++6"],
+            instance=instance,
+            zone=zone,
+            project=project,
+            max_attempts=10,
+            backoff=4,
+            )
+
     ssh_cmd(cmd=["sudo", "apt-get", "install", "-y", "python-pip", "python3-pip",
                  "virtualenv", "htop", "iotop"],
             instance=instance,
@@ -388,6 +402,12 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
                zone=zone, project=project)
 
 
+def restart_instance(instance):
+  with ShowTime("Restarting instance (Needed to properly load drivers)"):
+    run([constants.GCLOUD, "compute", "instances", "stop", instance])
+    run([constants.GCLOUD, "compute", "instances", "start", instance])
+
+
 def make(namespace):
   name = get_new_instance_name(namespace.project)
   print("Name:", name)
@@ -422,6 +442,8 @@ def make(namespace):
     open_http(project=namespace.project, zone=zone)
   configure_new_instance(instance=name, zone=zone, project=namespace.project,
                          gpu_present=bool(accellerator_spec))
+
+  restart_instance(instance=name)
 
   print("\n\n", "="*50, "\n", "==== {} ".format(name).ljust(50, "="), "\n", "="*50)
 
