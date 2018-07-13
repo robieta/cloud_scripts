@@ -402,10 +402,10 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
                zone=zone, project=project)
 
 
-def restart_instance(instance):
+def restart_instance(instance, zone):
   with ShowTime("Restarting instance (Needed to properly load drivers)"):
-    run([constants.GCLOUD, "compute", "instances", "stop", instance])
-    run([constants.GCLOUD, "compute", "instances", "start", instance])
+    run([constants.GCLOUD, "compute", "instances", "stop", instance, "--zone", zone])
+    run([constants.GCLOUD, "compute", "instances", "start", instance, "--zone", zone])
 
 
 def make(namespace):
@@ -443,7 +443,7 @@ def make(namespace):
   configure_new_instance(instance=name, zone=zone, project=namespace.project,
                          gpu_present=bool(accellerator_spec))
 
-  restart_instance(instance=name)
+  restart_instance(instance=name, zone=zone)
 
   print("\n\n", "="*50, "\n", "==== {} ".format(name).ljust(50, "="), "\n", "="*50)
 
