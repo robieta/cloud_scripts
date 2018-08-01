@@ -36,7 +36,7 @@ ZONES = {
 }
 
 SNAPSHOTS = {
-  "tensorflow-onboarding": "ubuntu-1604-lts-drawfork-with-cuda-20180521",
+  "tensorflow-onboarding": "ubuntu-1604-lts-drawfork-with-cuda-20180801",
 }
 
 IMAGENET = {
