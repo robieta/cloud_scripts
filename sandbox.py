@@ -324,8 +324,8 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
             instance=instance,
             zone=zone,
             project=project,
-            max_attempts=10,
-            backoff=4,
+            max_attempts=15,
+            backoff=0.5,
             )
 
     ssh_cmd(cmd=["sudo", "apt-get", "install", "-y", "python-pip", "python3-pip",
