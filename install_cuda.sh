@@ -18,7 +18,7 @@ if lspci | grep -i nvidia; then
     sudo apt-get update
     # Includes optional NCCL 2.x.
     sudo apt-get install cuda9.0 cuda-cublas-9-0 cuda-cufft-9-0 cuda-curand-9-0 \
-      cuda-cusolver-9-0 cuda-cusparse-9-0 libcudnn7=7.1.4.18-1+cuda9.0 \
+      cuda-cusolver-9-0 cuda-cusparse-9-0 libcudnn7=7.2.1.38-1+cuda9.0 \
        libnccl2=2.2.13-1+cuda9.0 cuda-command-line-tools-9-0
     # Optionally install TensorRT runtime, must be done after above cuda install.
     sudo apt-get update

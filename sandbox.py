@@ -328,8 +328,11 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
             backoff=0.5,
             )
 
-    ssh_cmd(cmd=["sudo", "apt-get", "install", "-y", "python-pip", "python3-pip",
-                 "virtualenv", "htop", "iotop"],
+    apt_cmd = ["sudo", "apt-get", "install", "-y", "python-pip", "python3-pip",
+               "virtualenv", "htop", "iotop"]
+    if gpu_present:
+      apt_cmd.append("libcudnn7")
+    ssh_cmd(cmd=apt_cmd,
             instance=instance,
             zone=zone,
             project=project,
@@ -444,6 +447,10 @@ def make(namespace):
                          gpu_present=bool(accellerator_spec))
 
   restart_instance(instance=name, zone=zone)
+
+  with ShowTime("Reestablishing SSH connection"):
+    ssh_cmd(cmd=["echo", "a"], instance=name, zone=zone,
+            project=namespace.project, max_attempts=8, backoff=4)
 
   print("\n\n", "="*50, "\n", "==== {} ".format(name).ljust(50, "="), "\n", "="*50)
 
