@@ -8,6 +8,7 @@ if sys.version_info[0] != 3:
 
 ACCOUNT = {
   "tensorflow-onboarding": "814778702491-compute@developer.gserviceaccount.com",
+  "google.com:tensorflow-performance": "283123161091-compute@developer.gserviceaccount.com",
   "ctpu-2017-09-01": "855031184363-compute@developer.gserviceaccount.com",
 }
 USER = os.getlogin()
@@ -25,18 +26,25 @@ ROOT = os.path.dirname(os.path.abspath(__file__))
 # Projects are given terse letter assignments to allow concise CLI commands
 PROJECTS = {
   "a": "tensorflow-onboarding",
-  "b": "tensorflow-performance",
+  "b": "google.com:tensorflow-performance",
   "c": "ctpu-2017-09-01",
 }
 
 ZONES = {
-  "tensorflow-onboarding":  ["us-central1-c", "us-central1-f"],
-  "tensorflow-performance": ["us-west1-b"],
-  "ctpu-2017-09-01":        ["us-central1-c"],
+  "tensorflow-onboarding":             ["us-central1-c", "us-central1-f"],
+  "google.com:tensorflow-performance": ["us-west1-b"],
+  "ctpu-2017-09-01":                   ["us-central1-c"],
+}
+
+REZONE = {
+  "tensorflow-onboarding": True,
+  "google.com:tensorflow-performance": False,
+  "ctpu-2017-09-01": False,
 }
 
 SNAPSHOTS = {
-  "tensorflow-onboarding": "ubuntu-1604-lts-drawfork-with-cuda-20180801",
+  "tensorflow-onboarding": "ubuntu-1604-lts-drawfork-with-cuda-20180921",
+  "google.com:tensorflow-performance": "ubuntu-1604-lts-drawfork-with-cuda-20180924",
 }
 
 IMAGENET = {
