@@ -11,7 +11,13 @@ ACCOUNT = {
   "google.com:tensorflow-performance": "283123161091-compute@developer.gserviceaccount.com",
   "ctpu-2017-09-01": "855031184363-compute@developer.gserviceaccount.com",
 }
+
 USER = os.getlogin()
+if USER != os.getenv("USER"):
+  env_user = os.getenv("USER")
+  print("Overriding user {} to {}".format(USER, env_user))
+  USER = env_user
+
 PROFILE = "~/.cloud/.profile"
 GCLOUD = "/usr/bin/gcloud"
 SANDBOX_TEMPLATE = "{user}-sandbox-{id}"

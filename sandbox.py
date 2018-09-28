@@ -129,9 +129,15 @@ def list_disks(project):
   return output
 
 
-def get_new_instance_name(project):
+def get_new_instance_name(project, requested_id=None):
   instances = list_instances(project)
   disks = list_disks(project)
+  if requested_id is not None:
+    name = constants.populate_template(user=constants.USER, id=requested_id)
+    if name in instances or name in disks:
+      raise ValueError("ID already in use")
+    return name
+
   for i in range(10000):
     name = constants.populate_template(user=constants.USER, id=i)
     if name not in instances and name not in disks:
@@ -413,7 +419,7 @@ def restart_instance(instance, zone):
 
 
 def make(namespace):
-  name = get_new_instance_name(namespace.project)
+  name = get_new_instance_name(namespace.project, namespace.id)
   print("Name:", name)
   num_cpu = calc_num_cpus(num_cpu=namespace.cpus, num_k80=namespace.k80,
                           num_p100=namespace.p100, num_v100=namespace.v100)
@@ -519,6 +525,11 @@ def construct_parser():
       "--rebuild", action="store_true",
       help="Create from scratch rather than starting from a snapshot. "
            "Unnecessary if GPUs are not used."
+  )
+
+  make_parser.add_argument(
+      "--id", "-id", type=str, default=None,
+      help="Set a specific ID. If not set, a value will be chosen automatically."
   )
 
   return parser
