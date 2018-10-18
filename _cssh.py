@@ -12,6 +12,10 @@ def construct_command(machine_id, port_list=None):
   port_list = port_list or []
   project=None
 
+  user = USER
+  if "_" in machine_id:
+    user, machine_id = machine_id.split("_")
+
   for i in sorted(PROJECTS.keys()):
     if machine_id.endswith(i):
       project = PROJECTS[i]
@@ -23,7 +27,7 @@ def construct_command(machine_id, port_list=None):
     print("Invalid machine id.")
     sys.exit(255)
 
-  machine_name = populate_template(user=USER, id=machine_id)
+  machine_name = populate_template(user=user, id=machine_id)
   ssh_cmd = ("{gcloud} compute --project {project} ssh "
              "{machine_name}".format(
       gcloud=GCLOUD, project=project, machine_name=machine_name

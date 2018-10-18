@@ -5,16 +5,19 @@ import os
 import subprocess
 import sys
 import time
+import uuid
 
 import googleapiclient.discovery
 
 import constants
 
 COMPUTE = googleapiclient.discovery.build('compute', 'v1')
+ERROR_LOG = "/tmp/{}.log".format(uuid.uuid4())
 
 
 def now():
   return datetime.datetime.utcnow().strftime("%H:%M:%S")
+
 
 class ShowTime:
   def __init__(self, description, show_elapsed=False):
@@ -32,20 +35,26 @@ class ShowTime:
     print()
 
 
-def run(args, silent=False):
+def run(args, silent=False, report_errors=False):
   p = subprocess.Popen(args, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
                        stderr=subprocess.PIPE)
   output, err = p.communicate()
   rc = p.returncode
+  results = output.decode("utf-8")
+
   if rc != 0:
     if not silent:
       print("Stdout:")
       print(output.decode("utf-8"))
       print("\nStderr")
       print(err.decode("utf-8"))
+    if report_errors:
+      return False, results
     raise OSError("Cmd failed")
 
-  return output.decode("utf-8")
+  if report_errors:
+    return True, results
+  return results
 
 
 def ssh_cmd(cmd: list, instance: str, zone: str, project: str, max_attempts=1,
@@ -58,14 +67,21 @@ def ssh_cmd(cmd: list, instance: str, zone: str, project: str, max_attempts=1,
              "--project", project, "--command", " ".join(cmd)]
   for i in range(max_attempts):
     final = (i+1) == max_attempts
-    try:
-      return run(command, silent=(not final))
-    except OSError:
-      if final:
-        raise
-      print("Command failed. Retrying with backoff")
-      time.sleep(backoff * 2**i)
-      continue
+    success, results = run(command, silent=(not final), report_errors=True)
+
+    if success:
+      return results
+
+    with open(ERROR_LOG, "at") as f:
+      f.write(results)
+      f.write("\n")
+
+    if final:
+      raise OSError("Cmd failed")
+
+    print("Command failed. Retrying with backoff. (error log: {})".format(ERROR_LOG))
+    time.sleep(backoff * 2**i)
+    continue
 
 
 def scp_file(local_path, remote_path, instance, zone, project, chmod=None):
@@ -99,7 +115,7 @@ def get_zone(project, num_k80, num_p100, num_v100):
   elif num_p100 and constants.REZONE[project]:
     zone = "us-central1-c"
   elif num_v100 and constants.REZONE[project]:
-    zone = "us-central1-f"
+    zone = "us-central1-a"  #"us-central1-f"
   else:
     zone = constants.ZONES[project][0]
   assert zone in constants.ZONES[project]
@@ -193,6 +209,7 @@ def make_instance(project, name, zone, machine_type, min_cpu_platform, accellera
       "--maintenance-policy", "TERMINATE",
       "--network-tier", "PREMIUM",
       "--no-restart-on-failure",
+      "--metadata", "enable-oslogin=False",
       "--service-account", constants.ACCOUNT[project],
       "--scopes", "https://www.googleapis.com/auth/cloud-platform"] + \
       accellerator_spec + \
@@ -319,7 +336,7 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
   """
   Very much work in progress. Apt can be finicky, so backoff is used.
   """
-  with ShowTime("Beginning apt installs", show_elapsed=True):
+  with ShowTime("Beginning apt installs (Batch 1)", show_elapsed=True):
     print("  (Retries are expected due to locking.)")
 
     # Needed by cloud TPU profile tool.
@@ -334,6 +351,7 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
             backoff=0.5,
             )
 
+  with ShowTime("Beginning apt installs (Batch 2)", show_elapsed=True):
     apt_cmd = ["sudo", "apt-get", "install", "-y", "--allow-downgrades",
                "python-pip", "python3-pip", "virtualenv", "htop", "iotop"]
     if gpu_present:

@@ -37,7 +37,7 @@ PROJECTS = {
 }
 
 ZONES = {
-  "tensorflow-onboarding":             ["us-central1-c", "us-central1-f"],
+  "tensorflow-onboarding":             ["us-central1-c", "us-central1-f", "us-central1-a", "us-central1-b"],
   "google.com:tensorflow-performance": ["us-west1-b"],
   "ctpu-2017-09-01":                   ["us-central1-c"],
 }
@@ -54,6 +54,8 @@ SNAPSHOTS = {
 }
 
 IMAGENET = {
-  "tensorflow-onboarding": {"us-central1-c": "imagenet-copy-1c",
+  "tensorflow-onboarding": {"us-central1-a": "imagenet-copy-1a",
+                            "us-central1-b": "imagenet-copy-1b",
+                            "us-central1-c": "imagenet-copy-1c",
                             "us-central1-f": "imagenet-copy-1f"},
 }
