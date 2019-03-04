@@ -49,7 +49,7 @@ REZONE = {
 }
 
 SNAPSHOTS = {
-  "tensorflow-onboarding": "ubuntu-1604-lts-drawfork-with-cuda-20180921",
+  "tensorflow-onboarding": "ubuntu-1604-lts-drawfork-with-cuda-20190113",
   "google.com:tensorflow-performance": "ubuntu-1604-lts-drawfork-with-cuda-20180924",
 }
 

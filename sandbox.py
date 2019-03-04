@@ -354,9 +354,6 @@ def configure_new_instance(instance: str, zone: str, project: str, gpu_present: 
   with ShowTime("Beginning apt installs (Batch 2)", show_elapsed=True):
     apt_cmd = ["sudo", "apt-get", "install", "-y", "--allow-downgrades",
                "python-pip", "python3-pip", "virtualenv", "htop", "iotop"]
-    if gpu_present:
-      apt_cmd.append("libcudnn7=7.2.1.38-1+cuda9.0")
-      apt_cmd.append("libnccl2=2.3.4-1+cuda9.0")
     ssh_cmd(cmd=apt_cmd,
             instance=instance,
             zone=zone,
@@ -471,7 +468,7 @@ def make(namespace):
   configure_new_instance(instance=name, zone=zone, project=namespace.project,
                          gpu_present=bool(accellerator_spec))
 
-  restart_instance(instance=name, zone=zone)
+  # restart_instance(instance=name, zone=zone)
 
   with ShowTime("Reestablishing SSH connection"):
     ssh_cmd(cmd=["echo", "a"], instance=name, zone=zone,
